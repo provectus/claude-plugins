@@ -15,12 +15,11 @@ Each plugin uses the native Claude Code plugin format:
 ## Commands
 
 - `pnpm run dev` — start MCP server in dev mode
-- `pnpm run build` — compile TypeScript
+- `pnpm run build` — compile TypeScript (only needed if modifying src/)
 - `pnpm run start` — run compiled MCP server
-- `pnpm run sync` — sync SKILL.md files to .claude/commands/
 
 ## Adding a Plugin
 
 1. Create `plugins/my-plugin/.claude-plugin/plugin.json` with name, description, version, keywords
 2. Add components as needed: `skills/*/SKILL.md`, `agents/*.md`, `prompt.md`, `.mcp.json`
-3. Run `pnpm run sync` if it has a skill component
+3. Run `/update-readme` to regenerate the plugins table in README.md
