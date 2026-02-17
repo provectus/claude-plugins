@@ -61,10 +61,9 @@ If you are only adding or editing plugins (not modifying the MCP server source i
 
 These slash commands are available when working in this repo with Claude Code:
 
-| Command | Purpose |
-|---------|---------|
+| Command          | Purpose                                                                  |
+|------------------|--------------------------------------------------------------------------|
 | `/update-readme` | Regenerate the Current Plugins table in the README from plugin manifests |
-| `/commit` | Stage changes and create a commit with a conventional commit message |
 
 ## Current Plugins
 
