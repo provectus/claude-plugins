@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "claude-plugins": {
+      "command": "node",
+      "args": ["dist/index.js"]
+    }
+  }
+}
