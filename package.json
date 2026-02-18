@@ -1,5 +1,6 @@
 {
   "name": "claude-plugins",
+  "packageManager": "pnpm@10.6.2",
   "version": "1.0.0",
   "type": "module",
   "main": "dist/index.js",
