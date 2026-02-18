@@ -11,6 +11,7 @@ const plugins = loadPlugins(pluginsDir);
 console.error(`Loaded ${plugins.length} plugins`);
 
 const port = process.env.PORT ? parseInt(process.env.PORT, 10) : undefined;
+const MAX_BODY_SIZE = parseInt(process.env.MAX_BODY_SIZE || "10485760", 10); // 10MB default
 
 if (port) {
   const httpServer = createHttpServer(async (req, res) => {
@@ -19,20 +20,60 @@ if (port) {
       const transport = new StreamableHTTPServerTransport({
         sessionIdGenerator: undefined,
       });
-      await server.connect(transport);
+      
+      try {
+        await server.connect(transport);
 
-      const body = await new Promise<string>((resolve) => {
-        let data = "";
-        req.on("data", (chunk: Buffer) => (data += chunk));
-        req.on("end", () => resolve(data));
-      });
+        const body = await new Promise<string>((resolve, reject) => {
+          let data = "";
+          let size = 0;
+          
+          req.on("data", (chunk: Buffer) => {
+            size += chunk.length;
+            if (size > MAX_BODY_SIZE) {
+              req.destroy();
+              reject(new Error("Request body too large"));
+              return;
+            }
+            data += chunk.toString("utf8");
+          });
+          
+          req.on("end", () => resolve(data));
+          req.on("error", reject);
+        });
 
-      await transport.handleRequest(req, res, JSON.parse(body));
+        let parsedBody;
+        try {
+          parsedBody = JSON.parse(body);
+        } catch (err) {
+          res.writeHead(400, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ error: "Invalid JSON in request body" }));
+          return;
+        }
 
-      res.on("close", () => {
+        await transport.handleRequest(req, res, parsedBody);
+
+        res.on("close", () => {
+          transport.close();
+          server.close();
+        });
+      } catch (err) {
+        const error = err as Error;
+        if (error.message === "Request body too large") {
+          res.writeHead(413, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ error: "Request body too large" }));
+        } else if (!res.headersSent) {
+          res.writeHead(500, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ error: "Internal server error" }));
+        }
+      } finally {
+        // Ensure cleanup happens even if errors occur
+        if (!res.writableEnded) {
+          res.end();
+        }
         transport.close();
         server.close();
-      });
+      }
     } else {
       res.writeHead(404, { "Content-Type": "application/json" });
       res.end(JSON.stringify({ error: "Not found" }));
