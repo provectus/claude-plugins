@@ -13,34 +13,45 @@ A few principles guide the design:
 - **Plain text wins.** Plugin logic lives in Markdown files. They're easy to read, easy to review, and easy to edit without tooling.
 - **Discovery is built in.** The repo itself is an MCP server. Other tools and Claude Code instances can search and retrieve plugins programmatically via `list_plugins`, `get_plugin`, and `search_plugins`.
 
-## Repository Structure
+## Current Plugins
 
-```
-claude-plugins/
-├── plugins/                          # All plugins live here
-│   └── {name}/
-│       ├── .claude-plugin/
-│       │   └── plugin.json           # Required — manifest
-│       ├── agents/{name}.md          # Optional — agent workflow prompts
-│       ├── skills/{name}/SKILL.md    # Optional — slash command prompts
-│       ├── prompt.md                 # Optional — reusable prompt template
-│       └── .mcp.json                 # Optional — bundled MCP server configs
-├── src/                              # MCP server source (TypeScript)
-├── CLAUDE.md                         # Project instructions for Claude Code
-└── package.json
-```
+| Plugin          | Type  | Description                                              |
+|-----------------|-------|----------------------------------------------------------|
+| `python-expert` | Agent | Python 3.11+, async/await, Pydantic, FastAPI, SQLAlchemy |
+| `kotlin-expert` | Agent | Kotlin 2.0+, coroutines, Spring Boot, domain modeling    |
+| `react-expert`  | Agent | React 19+, concurrent rendering, Tailwind, accessibility |
 
-### Plugin Components
+## Current Repo
 
-| Component      | Location                     | Purpose                                         |
-|----------------|------------------------------|-------------------------------------------------|
-| **Manifest**   | `.claude-plugin/plugin.json` | Name, description, version, keywords. Required. |
-| **Agent**      | `agents/{name}.md`           | System prompt for a specialized expert agent.   |
-| **Skill**      | `skills/{name}/SKILL.md`     | Prompt template exposed as a `/slash-command`.  |
-| **Prompt**     | `prompt.md`                  | A reusable prompt template.                     |
-| **MCP Config** | `.mcp.json`                  | Bundled MCP server configurations.              |
+This repository is both a collection of plugins and an MCP server. The server exposes tools that allow any MCP-compatible client — including other Claude Code sessions — to discover, search, and retrieve plugins programmatically.
 
-## Getting Started
+### Writing a Good Agent
+
+Agent prompts in `agents/*.md` define a specialized expert. A strong agent prompt:
+
+- **States the role clearly** up front — what the agent is an expert in.
+- **Encodes real opinions** — prefer pattern X over Y, always use Z. Generic advice is not useful.
+- **Includes concrete patterns** — show the actual code structure you want, not just descriptions of it.
+- **Covers failure modes** — what to watch out for, common mistakes, performance traps.
+- **Stays focused** — one domain of expertise per agent. Compose multiple agents rather than building one that tries to cover everything.
+
+### Writing a Good Skill
+
+Skill prompts in `skills/*/SKILL.md` define a slash command. A strong skill prompt:
+
+- **Defines the task** — what the skill does when invoked.
+- **Specifies inputs** — what arguments or context it needs.
+- **Describes the expected output** — format, structure, level of detail.
+
+### Guidelines
+
+- Keep plugin names lowercase and hyphenated (`my-plugin`, not `MyPlugin`).
+- Use descriptive keywords in the manifest — they power the search tool.
+- One concern per plugin. If you're mixing unrelated expertise, split it into separate plugins.
+- Write prompts in plain Markdown. No frontmatter, no special syntax.
+- Test your plugin by running the MCP server locally and calling `get_plugin` with your plugin name.
+
+### Getting Started
 
 ```bash
 pnpm install
@@ -65,19 +76,11 @@ These slash commands are available when working in this repo with Claude Code:
 |------------------|--------------------------------------------------------------------------|
 | `/update-readme` | Regenerate the Current Plugins table in the README from plugin manifests |
 
-## Current Plugins
+### MCP Server
 
-| Plugin          | Type  | Description                                              |
-|-----------------|-------|----------------------------------------------------------|
-| `python-expert` | Agent | Python 3.11+, async/await, Pydantic, FastAPI, SQLAlchemy |
-| `kotlin-expert` | Agent | Kotlin 2.0+, coroutines, Spring Boot, domain modeling    |
-| `react-expert`  | Agent | React 19+, concurrent rendering, Tailwind, accessibility |
+Any agentic tooling that supports the [Model Context Protocol](https://modelcontextprotocol.io) can connect to this server and programmatically list, search, and retrieve plugins — including their full markdown content.
 
-## MCP Server Integration
-
-This repository doubles as an MCP server for plugin discovery. Any agentic tooling that supports the [Model Context Protocol](https://modelcontextprotocol.io) can connect to it and programmatically list, search, and retrieve plugins — including their full markdown content.
-
-### Available Tools
+#### Available Tools
 
 | Tool             | Description                                                  | Parameters                                                 |
 |------------------|--------------------------------------------------------------|------------------------------------------------------------|
@@ -85,7 +88,7 @@ This repository doubles as an MCP server for plugin discovery. Any agentic tooli
 | `get_plugin`     | Get a plugin's full details or a single component's markdown | `name` (string), `component?` (`skill`, `agent`, `prompt`) |
 | `search_plugins` | Full-text search across name, description, and tags          | `query` (string), `type?` (`skill`, `agent`, `prompt`)     |
 
-### Connect from Claude Code Locally
+#### Connect from Claude Code Locally
 
 Add the server to your project's `.mcp.json` (or `~/.claude/claude_mcp_settings.json` for global access):
 
@@ -102,7 +105,7 @@ Add the server to your project's `.mcp.json` (or `~/.claude/claude_mcp_settings.
 
 Then in any Claude Code session the three tools above become available automatically.
 
-### Connect from other MCP clients
+#### Connect from other MCP clients
 
 The server supports both **stdio** and **HTTP** transports.
 
@@ -142,7 +145,7 @@ curl -X POST http://localhost:3000/mcp \
   -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-03-26","capabilities":{},"clientInfo":{"name":"test","version":"1.0.0"}}}'
 ```
 
-### Example workflow
+#### Example workflow
 
 A typical agentic integration pattern:
 
@@ -150,9 +153,9 @@ A typical agentic integration pattern:
 2. Call `get_plugin` with `component: "agent"` to retrieve the full markdown prompt
 3. Use the returned markdown as a system prompt, agent instruction, or context injection
 
-## Contributing
+### Contributing
 
-### Adding a Plugin
+#### Adding a Plugin
 
 1. Create the plugin directory and manifest:
 
@@ -175,33 +178,7 @@ mkdir -p plugins/my-plugin/.claude-plugin
 
 4. Run `/update-readme` in Claude Code to regenerate the Current Plugins table in the README.
 
-### Writing a Good Agent
-
-Agent prompts in `agents/*.md` define a specialized expert. A strong agent prompt:
-
-- **States the role clearly** up front — what the agent is an expert in.
-- **Encodes real opinions** — prefer pattern X over Y, always use Z. Generic advice is not useful.
-- **Includes concrete patterns** — show the actual code structure you want, not just descriptions of it.
-- **Covers failure modes** — what to watch out for, common mistakes, performance traps.
-- **Stays focused** — one domain of expertise per agent. Compose multiple agents rather than building one that tries to cover everything.
-
-### Writing a Good Skill
-
-Skill prompts in `skills/*/SKILL.md` define a slash command. A strong skill prompt:
-
-- **Defines the task** — what the skill does when invoked.
-- **Specifies inputs** — what arguments or context it needs.
-- **Describes the expected output** — format, structure, level of detail.
-
-### Guidelines
-
-- Keep plugin names lowercase and hyphenated (`my-plugin`, not `MyPlugin`).
-- Use descriptive keywords in the manifest — they power the search tool.
-- One concern per plugin. If you're mixing unrelated expertise, split it into separate plugins.
-- Write prompts in plain Markdown. No frontmatter, no special syntax.
-- Test your plugin by running the MCP server locally and calling `get_plugin` with your plugin name.
-
-### Making Changes
+#### Making Changes
 
 1. Create a branch from `main`.
 2. Add or modify plugins following the structure above.
