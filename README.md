@@ -121,8 +121,17 @@ npx tsx /path/to/claude-plugins/src/index.ts
 **HTTP** — for remote access (defaults to port 3000):
 
 ```bash
-pnpm run serve                # port 3000
-PORT=8080 pnpm run serve      # custom port
+pnpm run serve                       # port 3000 (all platforms)
+
+# Custom port:
+# macOS/Linux (bash, zsh, etc.):
+PORT=8080 pnpm run serve
+
+# Windows PowerShell:
+$env:PORT=8080; pnpm run serve
+
+# Windows cmd.exe:
+set PORT=8080&& pnpm run serve
 ```
 
 This starts an HTTP server with the MCP Streamable HTTP transport at `POST /mcp`. Clients can connect using any MCP-compatible HTTP client:
