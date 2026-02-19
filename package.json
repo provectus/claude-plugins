@@ -1,18 +1,32 @@
 {
   "name": "claude-plugins",
-  "packageManager": "pnpm@10.6.2",
   "version": "1.0.0",
+  "description": "MCP server for discovering and serving Claude Code plugins",
   "type": "module",
   "main": "dist/index.js",
+  "bin": {
+    "claude-plugins": "dist/index.js"
+  },
+  "files": [
+    "dist",
+    "plugins"
+  ],
+  "keywords": [
+    "mcp",
+    "claude",
+    "plugins",
+    "model-context-protocol"
+  ],
+  "license": "MIT",
   "scripts": {
     "build": "tsc",
     "start": "node dist/index.js",
     "dev": "tsx src/index.ts",
-    "serve": "PORT=3000 node dist/index.js",
-    "test": "vitest run"
+    "test": "vitest run",
+    "prepublishOnly": "pnpm run build"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.12.1",
+    "@modelcontextprotocol/sdk": "^1.26.0",
     "glob": "^11.0.1",
     "zod": "^3.24.2"
   },
