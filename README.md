@@ -1,6 +1,6 @@
 # Claude Plugins
 
-A shared repository of plugins for Claude Code. Each plugin packages reusable expertise — agents, skills, prompts, and MCP server configs — into a standard format that can be discovered and consumed through the built-in MCP server.
+A shared repository of plugins for Claude Code. Each plugin packages reusable expertise — agents, skills, prompts, and MCP server configs — into a standard format that can be discovered and consumed through the built-in MCP server. Available as an [npm package](https://www.npmjs.com/package/claude-plugins) for easy integration via `npx`.
 
 ## Philosophy
 
@@ -63,10 +63,61 @@ Other commands:
 ```bash
 pnpm run build        # Compile TypeScript (only needed if modifying src/)
 pnpm run start        # Run the compiled MCP server (stdio)
-pnpm run serve        # Start HTTP server on port 3000
+pnpm run test         # Run the test suite
 ```
 
 If you are only adding or editing plugins (not modifying the MCP server source in `src/`), you do not need to run `pnpm run build`.
+
+### Testing Locally
+
+#### Run the test suite
+
+```bash
+pnpm run test
+```
+
+This runs integration tests that verify tool registration, plugin filtering, search, and error handling using an in-memory MCP transport.
+
+#### Test the server manually
+
+You can test the stdio server by piping JSON-RPC messages directly:
+
+```bash
+# Build first (or use tsx for dev mode)
+pnpm run build
+
+# Send an initialize + list_plugins request
+echo '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-03-26","capabilities":{},"clientInfo":{"name":"test","version":"1.0.0"}}}
+{"jsonrpc":"2.0","method":"notifications/initialized"}
+{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"list_plugins","arguments":{}}}' | node dist/index.js
+```
+
+#### Test with Claude Code
+
+Add the local server to your project's `.mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "claude-plugins": {
+      "command": "npx",
+      "args": ["tsx", "/path/to/claude-plugins/src/index.ts"]
+    }
+  }
+}
+```
+
+Then start a Claude Code session — the `list_plugins`, `get_plugin`, and `search_plugins` tools will be available. Try asking Claude to "list all available plugins" to verify the connection.
+
+#### Test the npm package before publishing
+
+```bash
+# Simulate an npm install locally
+pnpm pack
+
+# Test the packed tarball works as a CLI
+npx ./claude-plugins-1.0.0.tgz
+```
 
 ### Claude Code Commands
 
@@ -88,9 +139,26 @@ Any agentic tooling that supports the [Model Context Protocol](https://modelcont
 | `get_plugin`     | Get a plugin's full details or a single component's markdown | `name` (string), `component?` (`skill`, `agent`, `prompt`) |
 | `search_plugins` | Full-text search across name, description, and tags          | `query` (string), `type?` (`skill`, `agent`, `prompt`)     |
 
-#### Connect from Claude Code Locally
+#### Connect via npm (recommended)
 
-Add the server to your project's `.mcp.json` (or `~/.claude/claude_mcp_settings.json` for global access):
+The server is published as an npm package and uses stdio transport. Add it to your project's `.mcp.json` (or `~/.claude/claude_mcp_settings.json` for global access):
+
+```json
+{
+  "mcpServers": {
+    "claude-plugins": {
+      "command": "npx",
+      "args": ["-y", "claude-plugins"]
+    }
+  }
+}
+```
+
+Then in any Claude Code session the three tools above become available automatically.
+
+#### Connect from a local clone
+
+If you're developing plugins locally, point directly at the built server:
 
 ```json
 {
@@ -103,46 +171,10 @@ Add the server to your project's `.mcp.json` (or `~/.claude/claude_mcp_settings.
 }
 ```
 
-Then in any Claude Code session the three tools above become available automatically.
-
-#### Connect from other MCP clients
-
-The server supports both **stdio** and **HTTP** transports.
-
-**stdio** (default) — for local MCP clients:
-
-```bash
-node /path/to/claude-plugins/dist/index.js
-```
-
 Or in dev mode (no build step required):
 
 ```bash
 npx tsx /path/to/claude-plugins/src/index.ts
-```
-
-**HTTP** — for remote access (defaults to port 3000):
-
-```bash
-pnpm run serve                       # port 3000 (all platforms)
-
-# Custom port:
-# macOS/Linux (bash, zsh, etc.):
-PORT=8080 pnpm run serve
-
-# Windows PowerShell:
-$env:PORT=8080; pnpm run serve
-
-# Windows cmd.exe:
-set PORT=8080&& pnpm run serve
-```
-
-This starts an HTTP server with the MCP Streamable HTTP transport at `POST /mcp`. Clients can connect using any MCP-compatible HTTP client:
-
-```bash
-curl -X POST http://localhost:3000/mcp \
-  -H "Content-Type: application/json" \
-  -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-03-26","capabilities":{},"clientInfo":{"name":"test","version":"1.0.0"}}}'
 ```
 
 #### Example workflow
