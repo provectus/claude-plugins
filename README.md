@@ -25,12 +25,6 @@ A few principles guide the design:
 
 ### Add to Claude Code
 
-Run this command from your terminal to add the plugin server to your Claude Code configuration:
-
-```bash
-claude mcp add claude-plugins -- npx -y claude-plugins
-```
-
 This registers the MCP server globally so it's available in every Claude Code session.
 
 Alternatively, add it manually to your project's `.mcp.json` (project-level) or `~/.claude/claude_mcp_settings.json` (global):
@@ -40,7 +34,7 @@ Alternatively, add it manually to your project's `.mcp.json` (project-level) or 
   "mcpServers": {
     "claude-plugins": {
       "command": "npx",
-      "args": ["-y", "claude-plugins"]
+      "args": ["-y", "@provectus/claude-plugins"]
     }
   }
 }
@@ -50,11 +44,11 @@ Alternatively, add it manually to your project's `.mcp.json` (project-level) or 
 
 Once connected, three tools become available in your Claude Code sessions:
 
-| Tool             | What it does                                   | Example prompt                                     |
-|------------------|------------------------------------------------|----------------------------------------------------|
-| `list_plugins`   | Browse all plugins, filter by type or tag       | *"List all available plugins"*                     |
-| `get_plugin`     | Retrieve a plugin's full content                | *"Get the python-expert agent prompt"*             |
-| `search_plugins` | Search plugins by keyword                       | *"Search for plugins related to code review"*      |
+| Tool             | What it does                              | Example prompt                                |
+|------------------|-------------------------------------------|-----------------------------------------------|
+| `list_plugins`   | Browse all plugins, filter by type or tag | *"List all available plugins"*                |
+| `get_plugin`     | Retrieve a plugin's full content          | *"Get the python-expert agent prompt"*        |
+| `search_plugins` | Search plugins by keyword                 | *"Search for plugins related to code review"* |
 
 You can ask Claude naturally and it will call the right tool:
 
@@ -197,17 +191,6 @@ Any agentic tooling that supports the [Model Context Protocol](https://modelcont
 #### Connect from a local clone
 
 If you're developing plugins locally, point directly at the built server:
-
-```json
-{
-  "mcpServers": {
-    "claude-plugins": {
-      "command": "node",
-      "args": ["/path/to/claude-plugins/dist/index.js"]
-    }
-  }
-}
-```
 
 Or in dev mode (no build step required):
 

@@ -1,6 +1,6 @@
 {
   "mcpServers": {
-    "claude-plugins": {
+    "provectus-claude-plugins-finder": {
       "command": "node",
       "args": ["dist/index.js"]
     }
