@@ -25,14 +25,12 @@ A few principles guide the design:
 
 ### Add to Claude Code
 
-This registers the MCP server globally so it's available in every Claude Code session.
-
-Alternatively, add it manually to your project's `.mcp.json` (project-level) or `~/.claude/claude_mcp_settings.json` (global):
+Add it to your project's `.mcp.json` (project-level) or `~/.claude/claude_mcp_settings.json` (global):
 
 ```json
 {
   "mcpServers": {
-    "claude-plugins": {
+    "provectus-claude-plugins-finder": {
       "command": "npx",
       "args": ["-y", "@provectusinc/claude-plugins"]
     }
@@ -60,10 +58,10 @@ Claude will use the retrieved plugin content (agent prompts, skills, etc.) to en
 
 ### Add to other MCP clients
 
-Any MCP-compatible client can connect to the server via stdio. The server binary is `claude-plugins`:
+Any MCP-compatible client can connect to the server via stdio. The server package is `@provectusinc/claude-plugins` (binary name: `claude-plugins`):
 
 ```bash
-npx -y claude-plugins
+npx -y @provectusinc/claude-plugins
 ```
 
 Configure your client to spawn this command and communicate over stdin/stdout using the [MCP protocol](https://modelcontextprotocol.io).
@@ -143,20 +141,7 @@ echo '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":
 
 #### Test with Claude Code
 
-Add the local server to your project's `.mcp.json`:
-
-```json
-{
-  "mcpServers": {
-    "claude-plugins": {
-      "command": "npx",
-      "args": ["tsx", "/path/to/claude-plugins/src/index.ts"]
-    }
-  }
-}
-```
-
-Then start a Claude Code session — the `list_plugins`, `get_plugin`, and `search_plugins` tools will be available. Try asking Claude to "list all available plugins" to verify the connection.
+The local server is already configured in `.mcp.json`. Start a Claude Code session and the `list_plugins`, `get_plugin`, and `search_plugins` tools will be available. Try asking Claude to "list all available plugins" to verify the connection.
 
 #### Test the npm package before publishing
 
@@ -165,7 +150,7 @@ Then start a Claude Code session — the `list_plugins`, `get_plugin`, and `sear
 pnpm pack
 
 # Test the packed tarball works as a CLI
-npx ./claude-plugins-1.0.0.tgz
+npx ./provectusinc-claude-plugins-0.0.0-develop.tgz
 ```
 
 ### Claude Code Commands
@@ -190,13 +175,7 @@ Any agentic tooling that supports the [Model Context Protocol](https://modelcont
 
 #### Connect from a local clone
 
-If you're developing plugins locally, point directly at the built server:
-
-Or in dev mode (no build step required):
-
-```bash
-npx tsx /path/to/claude-plugins/src/index.ts
-```
+The repo includes a `.mcp.json` that configures the local MCP server automatically. Just clone, install, build, and start a Claude Code session.
 
 ### Contributing
 
