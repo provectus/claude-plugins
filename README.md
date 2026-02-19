@@ -32,7 +32,7 @@ Add it to your project's `.mcp.json` (project-level) or `~/.claude/claude_mcp_se
   "mcpServers": {
     "provectus-claude-plugins-finder": {
       "command": "npx",
-      "args": ["-y", "@provectusinc/claude-plugins"]
+      "args": ["-y", "@provectusinc/claude-plugins@latest"]
     }
   }
 }
