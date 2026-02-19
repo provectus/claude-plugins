@@ -1,6 +1,6 @@
 # Claude Plugins
 
-A shared repository of plugins for Claude Code. Each plugin packages reusable expertise — agents, skills, prompts, and MCP server configs — into a standard format that can be discovered and consumed through the built-in MCP server. Available as an [npm package](https://www.npmjs.com/package/claude-plugins) for easy integration via `npx`.
+A shared repository of plugins for Claude Code. Each plugin packages reusable expertise — agents, skills, prompts, and MCP server configs — into a standard format that can be discovered and consumed through the built-in MCP server. Available as an [npm package](https://www.npmjs.com/package/@provectusinc/claude-plugins) for easy integration via `npx`.
 
 ## Philosophy
 
@@ -34,7 +34,7 @@ Alternatively, add it manually to your project's `.mcp.json` (project-level) or 
   "mcpServers": {
     "claude-plugins": {
       "command": "npx",
-      "args": ["-y", "@provectus/claude-plugins"]
+      "args": ["-y", "@provectusinc/claude-plugins"]
     }
   }
 }
