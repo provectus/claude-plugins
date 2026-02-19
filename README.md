@@ -21,6 +21,61 @@ A few principles guide the design:
 | `kotlin-expert` | Agent | Kotlin 2.0+, coroutines, Spring Boot, domain modeling    |
 | `react-expert`  | Agent | React 19+, concurrent rendering, Tailwind, accessibility |
 
+## Installation & Usage
+
+### Add to Claude Code
+
+Run this command from your terminal to add the plugin server to your Claude Code configuration:
+
+```bash
+claude mcp add claude-plugins -- npx -y claude-plugins
+```
+
+This registers the MCP server globally so it's available in every Claude Code session.
+
+Alternatively, add it manually to your project's `.mcp.json` (project-level) or `~/.claude/claude_mcp_settings.json` (global):
+
+```json
+{
+  "mcpServers": {
+    "claude-plugins": {
+      "command": "npx",
+      "args": ["-y", "claude-plugins"]
+    }
+  }
+}
+```
+
+### Using the plugins
+
+Once connected, three tools become available in your Claude Code sessions:
+
+| Tool             | What it does                                   | Example prompt                                     |
+|------------------|------------------------------------------------|----------------------------------------------------|
+| `list_plugins`   | Browse all plugins, filter by type or tag       | *"List all available plugins"*                     |
+| `get_plugin`     | Retrieve a plugin's full content                | *"Get the python-expert agent prompt"*             |
+| `search_plugins` | Search plugins by keyword                       | *"Search for plugins related to code review"*      |
+
+You can ask Claude naturally and it will call the right tool:
+
+- *"What plugins are available for Python?"*
+- *"Show me the react-expert agent"*
+- *"Find plugins tagged with 'git'"*
+
+Claude will use the retrieved plugin content (agent prompts, skills, etc.) to enhance its responses with specialized expertise.
+
+### Add to other MCP clients
+
+Any MCP-compatible client can connect to the server via stdio. The server binary is `claude-plugins`:
+
+```bash
+npx -y claude-plugins
+```
+
+Configure your client to spawn this command and communicate over stdin/stdout using the [MCP protocol](https://modelcontextprotocol.io).
+
+---
+
 ## Current Repo
 
 This repository is both a collection of plugins and an MCP server. The server exposes tools that allow any MCP-compatible client — including other Claude Code sessions — to discover, search, and retrieve plugins programmatically.
@@ -139,23 +194,6 @@ Any agentic tooling that supports the [Model Context Protocol](https://modelcont
 | `get_plugin`     | Get a plugin's full details or a single component's markdown | `name` (string), `component?` (`skill`, `agent`, `prompt`) |
 | `search_plugins` | Full-text search across name, description, and tags          | `query` (string), `type?` (`skill`, `agent`, `prompt`)     |
 
-#### Connect via npm (recommended)
-
-The server is published as an npm package and uses stdio transport. Add it to your project's `.mcp.json` (or `~/.claude/claude_mcp_settings.json` for global access):
-
-```json
-{
-  "mcpServers": {
-    "claude-plugins": {
-      "command": "npx",
-      "args": ["-y", "claude-plugins"]
-    }
-  }
-}
-```
-
-Then in any Claude Code session the three tools above become available automatically.
-
 #### Connect from a local clone
 
 If you're developing plugins locally, point directly at the built server:
@@ -176,14 +214,6 @@ Or in dev mode (no build step required):
 ```bash
 npx tsx /path/to/claude-plugins/src/index.ts
 ```
-
-#### Example workflow
-
-A typical agentic integration pattern:
-
-1. Call `list_plugins` or `search_plugins` to discover relevant plugins
-2. Call `get_plugin` with `component: "agent"` to retrieve the full markdown prompt
-3. Use the returned markdown as a system prompt, agent instruction, or context injection
 
 ### Contributing
 
