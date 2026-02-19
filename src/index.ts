@@ -24,47 +24,60 @@ if (portEnv !== undefined) {
   port = parsed;
 }
 
-if (port !== undefined) {
-  const httpServer = createHttpServer(async (req, res) => {
-    if (req.url === "/mcp" && req.method === "POST") {
-      const server = createServer(plugins);
-      const transport = new StreamableHTTPServerTransport({
-        sessionIdGenerator: undefined,
-      });
-
-      try {
-        await server.connect(transport);
-
-        const body = await new Promise<string>((resolve, reject) => {
-          let data = "";
-          let size = 0;
-          req.on("data", (chunk: Buffer) => {
-            size += chunk.length;
-            if (size > MAX_BODY_SIZE) {
-              req.destroy();
-              reject(new Error("Request body too large"));
-              return;
-            }
-            data += chunk;
-          });
-          req.on("end", () => resolve(data));
-          req.on("error", reject);
-        });
-
-        await transport.handleRequest(req, res, JSON.parse(body));
-      } catch (err) {
-        if (!res.headersSent) {
-          const status = err instanceof Error && err.message === "Request body too large" ? 413 : 400;
-          res.writeHead(status, { "Content-Type": "application/json" });
-          res.end(JSON.stringify({ error: status === 413 ? "Request body too large" : "Bad request" }));
-        }
-      } finally {
-        transport.close();
-        server.close();
+function parseBody(req: import("http").IncomingMessage): Promise<string> {
+  return new Promise((resolve, reject) => {
+    let data = "";
+    let size = 0;
+    req.on("data", (chunk: Buffer) => {
+      size += chunk.length;
+      if (size > MAX_BODY_SIZE) {
+        req.destroy();
+        reject(new Error("Request body too large"));
+        return;
       }
-    } else {
+      data += chunk;
+    });
+    req.on("end", () => resolve(data));
+    req.on("error", reject);
+  });
+}
+
+if (port !== undefined) {
+  // HTTP mode: stateless per-request handling.
+  // The MCP SDK requires a fresh transport per request in stateless mode,
+  // and a separate McpServer per transport for concurrent request safety.
+  // Plugins are loaded once and shared across all requests.
+  const httpServer = createHttpServer(async (req, res) => {
+    if (req.url === "/health") {
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ status: "ok", plugins: plugins.length }));
+      return;
+    }
+
+    if (req.url !== "/mcp" || req.method !== "POST") {
       res.writeHead(404, { "Content-Type": "application/json" });
       res.end(JSON.stringify({ error: "Not found" }));
+      return;
+    }
+
+    const server = createServer(plugins);
+    const transport = new StreamableHTTPServerTransport({
+      sessionIdGenerator: undefined,
+    });
+
+    try {
+      await server.connect(transport);
+      const body = await parseBody(req);
+      await transport.handleRequest(req, res, JSON.parse(body));
+    } catch (err) {
+      if (!res.headersSent) {
+        const status = err instanceof Error && err.message === "Request body too large" ? 413 : 400;
+        res.writeHead(status, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: status === 413 ? "Request body too large" : "Bad request" }));
+      }
+    } finally {
+      await transport.close();
+      await server.close();
     }
   });
 
@@ -77,6 +90,7 @@ if (port !== undefined) {
     process.exit(0);
   });
 } else {
+  // Stdio mode: single long-lived connection
   const server = createServer(plugins);
   const transport = new StdioServerTransport();
   await server.connect(transport);
