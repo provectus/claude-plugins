@@ -19,18 +19,20 @@ export function createServer(plugins: Plugin[]): McpServer {
     version: "1.0.0",
   });
 
-  server.tool(
+  server.registerTool(
     "list_plugins",
-    "List available plugins, optionally filtered by component type or tag",
     {
-      type: z
-        .enum(["skill", "agent", "prompt"])
-        .optional()
-        .describe("Filter to plugins that have this component type"),
-      tag: z
-        .string()
-        .optional()
-        .describe("Filter to plugins that have this tag"),
+      description: "List available plugins, optionally filtered by component type or tag",
+      inputSchema: z.object({
+        type: z
+          .enum(["skill", "agent", "prompt"])
+          .optional()
+          .describe("Filter to plugins that have this component type"),
+        tag: z
+          .string()
+          .optional()
+          .describe("Filter to plugins that have this tag"),
+      }),
     },
     async ({ type, tag }) => {
       let results = plugins;
@@ -54,17 +56,19 @@ export function createServer(plugins: Plugin[]): McpServer {
     }
   );
 
-  server.tool(
+  server.registerTool(
     "get_plugin",
-    "Get a plugin's full details or a specific component's content",
     {
-      name: z.string().describe("Plugin name"),
-      component: z
-        .enum(["skill", "agent", "prompt"])
-        .optional()
-        .describe(
-          "If specified, return only this component's content"
-        ),
+      description: "Get a plugin's full details or a specific component's content",
+      inputSchema: z.object({
+        name: z.string().describe("Plugin name"),
+        component: z
+          .enum(["skill", "agent", "prompt"])
+          .optional()
+          .describe(
+            "If specified, return only this component's content"
+          ),
+      }),
     },
     async ({ name, component }) => {
       const plugin = plugins.find(
@@ -100,15 +104,17 @@ export function createServer(plugins: Plugin[]): McpServer {
     }
   );
 
-  server.tool(
+  server.registerTool(
     "search_plugins",
-    "Search plugins by keyword across name, description, and tags",
     {
-      query: z.string().describe("Search query"),
-      type: z
-        .enum(["skill", "agent", "prompt"])
-        .optional()
-        .describe("Filter to plugins that have this component type"),
+      description: "Search plugins by keyword across name, description, and tags",
+      inputSchema: z.object({
+        query: z.string().describe("Search query"),
+        type: z
+          .enum(["skill", "agent", "prompt"])
+          .optional()
+          .describe("Filter to plugins that have this component type"),
+      }),
     },
     async ({ query, type }) => {
       const q = query.toLowerCase();
